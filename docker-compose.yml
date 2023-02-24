@@ -3,6 +3,7 @@ services:
   nana:
     build: 
       context: ./
+    env_file: .env
     hostname: nana
     restart: unless-stopped
     volumes:
