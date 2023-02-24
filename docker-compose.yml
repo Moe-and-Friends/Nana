@@ -1,0 +1,12 @@
+version: "3.1"
+services:
+  nana:
+    build: 
+      context: ./
+    hostname: nana
+    restart: unless-stopped
+    volumes:
+      - ./configs/settings.toml:/opt/nana/configs/settings.toml:ro # Readonly
+      - ./configs/settings.local.toml:/opt/nana/configs/settings.local.toml:ro # Readonly
+      - ./configs/.secrets.toml:/opt/nana/configs/.secrets.toml:ro # Readonly
+      - ./configs/.secrets.local.toml:/opt/nana/configs/.secrets.local.toml:ro # Readonly
