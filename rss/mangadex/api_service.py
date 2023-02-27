@@ -6,6 +6,7 @@ from typing import Dict
 MANGADEX_API_URL = "https://api.mangadex.org"
 MANGADEX_API_CHAPTER_PATH = MANGADEX_API_URL + "/chapter"
 MANGADEX_API_MANGA_PATH = MANGADEX_API_URL + "/manga"
+MANGADEX_MANGA_PATH = "https://mangadex.org/title/{uuid}"
 MANGADEX_OG_CHAPTER_PREVIEW_URL = "https://og.mangadex.org/og-image/chapter/{uuid}"
 MANGADEX_OG_MANGA_PREVIEW_URL = "https://og.mangadex.org/og-image/manga/{uuid}"
 
@@ -109,7 +110,11 @@ class Manga(MangadexBase):
 
     @property
     def title_en(self):
-        return self._title.get("en", "Unknown Title")
+        return self._title.get("en", "Unknown English Title")
+    
+    @property
+    def url(self):
+        return MANGADEX_MANGA_PATH.format(uuid = super().id)
 
     @classmethod
     def get_manga_details(cls, id: str):
