@@ -6,7 +6,8 @@ from typing import Dict
 MANGADEX_API_URL = "https://api.mangadex.org"
 MANGADEX_API_CHAPTER_PATH = MANGADEX_API_URL + "/chapter"
 MANGADEX_API_MANGA_PATH = MANGADEX_API_URL + "/manga"
-MANGADEX_OG_PREVIEW_URL = "https://og.mangadex.org/og-image/chapter/{uuid}"
+MANGADEX_OG_CHAPTER_PREVIEW_URL = "https://og.mangadex.org/og-image/chapter/{uuid}"
+MANGADEX_OG_MANGA_PREVIEW_URL = "https://og.mangadex.org/og-image/manga/{uuid}"
 
 class MangadexBase:
 
@@ -20,25 +21,25 @@ class MangadexBase:
 
 class Chapter(MangadexBase):
 
-    def __init__(self, id: str = None, chapter: str = None, manga_uuid: str = None, title: str = None):
+    def __init__(self, id: str = None, chapter_num: str = None, manga_uuid: str = None, title: str = None):
         """
         Notes:
             - title is for the Chapter title, not the Manga title
         """
         super().__init__(id=id)
-        self._chapter = chapter
+        self._chapter_num = chapter_num
         self._manga_uuid = manga_uuid
         self._title = title
 
     @property
-    def chapter(self):
-        if self._chapter == "null":
-            return None
-        return self._chapter
+    def chapter_num(self):
+        if self._chapter_num == "null":
+            return ""
+        return self._chapter_num
     
     @property
     def preview_url(self):
-        return MANGADEX_OG_PREVIEW_URL.format(uuid = super().id)
+        return MANGADEX_OG_CHAPTER_PREVIEW_URL.format(uuid = super().id)
 
     @property
     def title(self):
@@ -57,22 +58,33 @@ class Chapter(MangadexBase):
         if id is None:
             return None
 
-        res = requests.get(MANGADEX_API_CHAPTER_PATH, params={"ids[]": [id]})
+        #res = requests.get(MANGADEX_API_CHAPTER_PATH, params={"ids[]": [id]})
+        res = requests.get(MANGADEX_API_CHAPTER_PATH + "/" + id)
         try:
             if res.status_code == 200:
                 jsonRes = res.json()
 
                 # Expect one response in the data field
-                chapter_data = jsonRes["data"][0]
-                chapter_attributes = chapter_data.get("attributes", dict())
-                chapter_relations = chapter_data.get("relationships", dict())
+                #chapter_data = jsonRes["data"][0]
+                res_chapter_data = jsonRes.get("data", dict())
+                res_chapter_attributes = res_chapter_data.get("attributes", dict())
+                res_chapter_relations = res_chapter_data.get("relationships", dict())
+
+                chapter_id = res_chapter_data.get("id", str()) 
+                chapter_num = res_chapter_attributes.get("chapter", "error_occured")
+                chapter_title = res_chapter_attributes.get("title", "error_occured")
+
+                chapter_manga_uuid = str()
+                for rel in res_chapter_relations:
+                    if rel.get("type") == "manga":
+                        chapter_manga_uuid = rel.get("id", str())
+                        break
 
                 return Chapter(
-                    id=chapter_data.get("id", str()),
-                    chapter=chapter_attributes.get("chapter", "error"),
-                    # Gets the ID from the relationship of type "manga".
-                    manga_uuid=[c.get("id", None) for c in chapter_relations if c.get("type") == "manga"][0],
-                    title=chapter_attributes.get("title", "error")
+                    id = chapter_id,
+                    chapter_num = chapter_num,
+                    manga_uuid = chapter_manga_uuid,
+                    title = chapter_title
                 )
 
             else:
@@ -86,6 +98,10 @@ class Manga(MangadexBase):
     def __init__(self, id: str = None, title: Dict[str, str] = dict()):
         super().__init__(id=id)
         self._title = title
+
+    @property
+    def preview_url(self):
+        return MANGADEX_OG_MANGA_PREVIEW_URL.format(uuid = super().id)
 
     @property
     def title(self):

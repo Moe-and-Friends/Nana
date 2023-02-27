@@ -14,6 +14,6 @@ def build_chapter_webhook(message: Message, chapter: Chapter, manga: Manga, url:
         "image": {
             "url": chapter.preview_url,
         },
-        "title": manga.title_en + " - " + "Chapter {}".format(chapter.chapter),
+        "title": manga.title_en + " - " + "Chapter {}".format(chapter.chapter_num),
         "url": url,
     }
