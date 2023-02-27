@@ -1,6 +1,6 @@
 # On these streets, we test in production!
 
-[default]
+[todo]
 DISCORD_TOKEN = "TODO"
 
 RSS_WEBHOOKS = [
