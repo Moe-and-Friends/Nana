@@ -4,9 +4,9 @@ from discord.ext import commands
 
 from config import settings, RSS_OBSERVED_CHANNELS
 
-from . import discord_api_service as DAS
-from . import mangadex_api_service as MAS
+from . import api_service as MAS
 from . import webhook_templates as WT
+from ..shared import discord_api_service as DAS
 
 import re
 from typing import List
@@ -47,14 +47,8 @@ class MangaDex(commands.Cog, name = "MangaDex"):
         chapter_urls = self.CHAPTER_PATTERN.finditer(message.content)
         return await self._generate_chapter_webhooks(chapter_urls, message)
 
-class RssCog(commands.Cog):
-
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
     @commands.Cog.listener("on_message")
     async def on_fluff_rss_message(self, message: discord.Message):
-
         # Ignore all messages from bots, including self.
         if message.author.bot:
             return
@@ -63,11 +57,7 @@ class RssCog(commands.Cog):
         if message.channel.id not in settings.get(RSS_OBSERVED_CHANNELS):
             return
 
+        # Create a list of all webhooks, and then send them.
         webhooks = list()
-
-        # Process Mangadex URLS
-        mangadex_cog = self.bot.get_cog('MangaDex')
-        if mangadex_cog is not None:
-            webhooks.extend(await mangadex_cog.process_message(message))
-
+        webhooks.extend(await self.process_message(message))
         DAS.send_webhooks(webhooks)

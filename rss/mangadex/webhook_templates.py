@@ -1,5 +1,5 @@
 
-from .mangadex_api_service import Chapter, Manga
+from .api_service import Chapter, Manga
 from discord import Message
 
 def build_chapter_webhook(message: Message, chapter: Chapter, manga: Manga, url: str):
