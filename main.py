@@ -10,7 +10,7 @@ intents.message_content = True
 bot = Bot("nana", intents = intents)
 
 EXTENSIONS = [
-    "rss.cog"
+    "rss.extension"
 ]
 
 async def load_extensions():

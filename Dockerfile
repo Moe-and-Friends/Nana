@@ -8,5 +8,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY requirements.txt /opt/requirements.txt
 RUN pip3 install -r /opt/requirements.txt && rm /opt/requirements.txt
 
-COPY src /opt/nana/
+COPY rss /opt/nana/rss
+COPY *.py /opt/nana/
+
 ENTRYPOINT ["python3", "/opt/nana/main.py"]
