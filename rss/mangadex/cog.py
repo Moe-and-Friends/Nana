@@ -4,15 +4,17 @@ from discord.ext import commands
 
 from config import settings, RSS_OBSERVED_CHANNELS
 
-from . import api_service as MAS
-from . import webhook_templates as WT
 from ..shared import discord_api_service as DAS
+from ..shared import beautifulsoup_service as BSS
 
+import json
 import re
 from typing import List
 
 # Note: This really doesn't necessarily have to be a Cog.
-class MangaDex(commands.Cog, name = "MangaDex"):
+
+
+class MangaDex(commands.Cog, name="MangaDex"):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -31,49 +33,26 @@ class MangaDex(commands.Cog, name = "MangaDex"):
     # Capture Group 2 is the name (optional)
     MANGA_PATTERN = re.compile(r'(?:https://)?mangadex.org/title/([\w-]+)(?:/(\S+))?')
 
-    #async def _generate_chapter_webhook(self, uuid: str, url: str, discord_message: discord.Message):
-    #    chapter_details = MAS.Chapter.get_chapter_details(uuid)
-    #    if (chapter_details and chapter_details.manga_uuid):
-    #        manga_details = MAS.Manga.get_manga_details(chapter_details.manga_uuid)
-    #        return WT.build_chapter_webhook(discord_message, chapter_details, manga_details, url)
-
     async def _generate_chapter_webhooks(self, urls: List[re.Match], discord_message: discord.Message):
         webhooks = list()
         for url in urls:
             chapter_url = url.group(0)
-            chapter_uuid = url.group(1)
-
-            # Build chapter webhook
-            chapter_details = MAS.Chapter.get_chapter_details(chapter_uuid)
-            if (chapter_details and chapter_details.manga_uuid):
-                manga_details = MAS.Manga.get_manga_details(chapter_details.manga_uuid)
-                webhooks.append(WT.build_chapter_webhook(discord_message, chapter_details, manga_details, chapter_url))
-
-                try:
-                    cover_details = MAS.Cover.get_cover_details(manga_details.cover_arts[0])
-                    webhooks.append(WT.build_manga_webhook_preview(discord_message, manga_details, cover_details))
-                except Exception as e:
-                    # No cover arts for this manga.
-                    pass
-
+            chapter_og_metadata = BSS.fetch_page_metadata(chapter_url)
+            if chapter_og_metadata:
+                webhooks.append(DAS.generate_webhook(discord_message, chapter_og_metadata))
         return webhooks
 
-    async def _generate_manga_webhook(self, uuid: str, discord_message: discord.Message):
-        manga_details = MAS.Manga.get_manga_details(uuid)
-        if manga_details:
-            return WT.build_manga_webhook_full(discord_message, manga_details)
-
-    async def _generate_manga_webhooks(self, uuids: List[str], discord_message: discord.Message):
+    async def _generate_manga_webhooks(self, urls: List[str], discord_message: discord.Message):
         webhooks = list()
-        for uuid in uuids:
-            if webhook := await self._generate_manga_webhook(uuid, discord_message):
-                webhooks.append(webhook)
+        for url in urls:
+            manga_og_metadata = BSS.fetch_page_metadata(url)
+            if manga_og_metadata:
+                webhooks.append(DAS.generate_webhook(discord_message, manga_og_metadata))
         return webhooks
 
     async def _generate_manga_webhooks_from_re_matches(self, urls: List[re.Match], discord_message: discord.Message):
-        # We can disregard the full url string here; it will be built again later.
-        uuids = [u.group(1) for u in urls]
-        return await self._generate_manga_webhooks(uuids, discord_message)
+        urls = [u.group(0) for u in urls]
+        return await self._generate_manga_webhooks(urls, discord_message)
 
     async def process_message(self, message: discord.Message):
         """
