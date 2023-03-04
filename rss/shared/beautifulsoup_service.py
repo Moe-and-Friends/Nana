@@ -52,9 +52,16 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     def fetch(url: str, session: requests.Session):
         return session.get(url)
 
-    def get_og_meta_content(soup: BeautifulSoup, property: str):
+    def get_og_meta_property(soup: BeautifulSoup, property: str):
         meta_property = soup.find("meta", property=property)
-        return meta_property["content"]
+        if property := meta_property.get("content"):
+            return property
+        return meta_property.get("name")
+
+    def get_title(soup: BeautifulSoup):
+        if title := soup.title:
+            return title.string
+        return get_og_meta_property(soup, "og:title")
 
     session = requests.Session()
     if spoof_user_agent:
@@ -67,13 +74,13 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     soup = BeautifulSoup(page.text, 'html.parser')
 
     # Start to fetch metadata
-    og_description = get_og_meta_content(soup, "og:description")
-    og_image = get_og_meta_content(soup, "og:image:secure_url")
+    og_description = get_og_meta_property(soup, "og:description")
+    og_image = get_og_meta_property(soup, "og:image:secure_url")
     if not og_image:
-        og_image = get_og_meta_content(soup, "og:image")
-    og_site_name = get_og_meta_content(soup, "og:site_name")
-    og_title = get_og_meta_content(soup, "og:title")
-    og_url = get_og_meta_content(soup, "og:url")
+        og_image = get_og_meta_property(soup, "og:image")
+    og_site_name = get_og_meta_property(soup, "og:site_name")
+    og_title = get_title(soup)
+    og_url = get_og_meta_property(soup, "og:url")
 
     return Metadata(
         description=og_description,
