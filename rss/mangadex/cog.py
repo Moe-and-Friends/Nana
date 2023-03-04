@@ -33,12 +33,16 @@ class MangaDex(commands.Cog, name="MangaDex"):
     # Capture Group 2 is the name (optional)
     MANGA_PATTERN = re.compile(r'(?:https://)?mangadex.org/title/([\w-]+)(?:/(\S+))?')
 
+    # The yellow-orangish colour used for Mangadex embed previews
+    MANGADEX_COLOUR = 15102792
+
     async def _generate_chapter_webhooks(self, urls: List[re.Match], discord_message: discord.Message):
         webhooks = list()
         for url in urls:
             chapter_url = url.group(0)
             chapter_og_metadata = BSS.fetch_page_metadata(chapter_url)
             if chapter_og_metadata:
+                chapter_og_metadata.colour = self.MANGADEX_COLOUR
                 webhooks.append(DAS.generate_webhook(discord_message, chapter_og_metadata))
         return webhooks
 
@@ -47,6 +51,7 @@ class MangaDex(commands.Cog, name="MangaDex"):
         for url in urls:
             manga_og_metadata = BSS.fetch_page_metadata(url)
             if manga_og_metadata:
+                manga_og_metadata.colour = self.MANGADEX_COLOUR
                 webhooks.append(DAS.generate_webhook(discord_message, manga_og_metadata))
         return webhooks
 

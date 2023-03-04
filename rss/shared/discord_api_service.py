@@ -12,7 +12,7 @@ def generate_webhook(message: Message, metadata: Metadata):
         "author": {
             "name": metadata.site_name,
         },
-        "color": 15102792,
+        "color": metadata.colour,
         "description": metadata.description,
         "footer": {
             "icon_url": author.avatar.url,

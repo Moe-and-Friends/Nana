@@ -10,6 +10,7 @@ SPOOF_DISCORD_USER_AGENT = "Mozilla/5.0 (compatible; Discordbot/2.0; +https://di
 class Metadata:
 
     def __init__(self,
+                 colour: int = 0,
                  description: str = None,
                  image: str = None,
                  site_name: str = None,
@@ -17,12 +18,21 @@ class Metadata:
                  title: str = None,
                  url: str = None):
 
+        self._colour: int = colour
         self._description: str = description
         self._image: str = image
         self._site_name: str = site_name
         self._soup: BeautifulSoup = soup
         self._title: str = title
         self._url: str = url
+
+    @property
+    def colour(self):
+        return self._colour
+
+    @colour.setter
+    def colour(self, value):
+        self._colour = value
 
     @property
     def description(self):
@@ -82,6 +92,9 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
 
     def get_og_meta_property(soup: BeautifulSoup, property: str):
         meta_property = soup.find("meta", property=property)
+        if not meta_property:
+            return None
+
         if property := meta_property.get("content"):
             return property
         return meta_property.get("name")
@@ -102,6 +115,13 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     soup = BeautifulSoup(page.text, 'html.parser')
 
     # Start to fetch metadata
+
+    # Special handling for colour
+    site_colour = 0
+    if colour := get_og_meta_property(soup, "theme-color"):
+        if colour and colour.startswith("#"):
+            site_colour = int(colour[1:], base=16)
+
     og_description = get_og_meta_property(soup, "og:description")
     og_image = get_og_meta_property(soup, "og:image:secure_url")
     if not og_image:
@@ -111,6 +131,7 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     og_url = get_og_meta_property(soup, "og:url")
 
     return Metadata(
+        colour=site_colour,
         description=og_description,
         image=og_image,
         site_name=og_site_name,
