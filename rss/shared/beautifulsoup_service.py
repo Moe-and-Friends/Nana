@@ -90,19 +90,39 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     def fetch(url: str, session: requests.Session):
         return session.get(url)
 
-    def get_og_meta_property(soup: BeautifulSoup, property: str):
-        meta_property = soup.find("meta", property=property)
-        if not meta_property:
+    def get_meta_property(soup: BeautifulSoup, property: str, alt_property: str = None):
+
+        # Inner function to handle actually fetching the property itself from Soup.
+        def _get_meta_property(soup: BeautifulSoup, property: str):
+            # Usually, meta links are categorised by property.
+            meta_property = soup.find("meta", property=property)
+            if meta_property:
+                if content := meta_property.get("content"):
+                    return content
+
+            # Sometimes, meta links are instead categorised by name
+            meta_name = soup.find("meta", attrs={'name': property})  # Name has to be set via attrs
+            if meta_name:
+                if content := meta_name.get("content"):
+                    return content
+
             return None
 
-        if property := meta_property.get("content"):
-            return property
-        return meta_property.get("name")
+        # Try to get the meta value using the primary property name, if specified.
+        if property_from_primary := _get_meta_property(soup, property):
+            return property_from_primary
+        # Try to get the meta value using the alternative property name, if specified.
+        elif alt_property:
+            if property_from_alt := _get_meta_property(soup, alt_property):
+                return property_from_alt
+        # If both fail, explicitly return None.
+        else:
+            return None
 
     def get_title(soup: BeautifulSoup):
         if title := soup.title:
             return title.string
-        return get_og_meta_property(soup, "og:title")
+        return get_meta_property(soup, "og:title")
 
     session = requests.Session()
     if spoof_user_agent:
@@ -118,17 +138,15 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
 
     # Special handling for colour
     site_colour = 0
-    if colour := get_og_meta_property(soup, "theme-color"):
+    if colour := get_meta_property(soup, "theme-color"):
         if colour and colour.startswith("#"):
             site_colour = int(colour[1:], base=16)
 
-    og_description = get_og_meta_property(soup, "og:description")
-    og_image = get_og_meta_property(soup, "og:image:secure_url")
-    if not og_image:
-        og_image = get_og_meta_property(soup, "og:image")
-    og_site_name = get_og_meta_property(soup, "og:site_name")
+    og_description = get_meta_property(soup, "og:description", "description")
+    og_image = get_meta_property(soup, "og:image:secure_url", "og:image")
+    og_site_name = get_meta_property(soup, "og:site_name")
     og_title = get_title(soup)
-    og_url = get_og_meta_property(soup, "og:url")
+    og_url = get_meta_property(soup, "og:url")
     if not og_url:
         og_url = url  # Fallback to the originally provided URL in the message.
 
