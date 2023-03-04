@@ -129,6 +129,8 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
     og_site_name = get_og_meta_property(soup, "og:site_name")
     og_title = get_title(soup)
     og_url = get_og_meta_property(soup, "og:url")
+    if not og_url:
+        og_url = url  # Fallback to the originally provided URL in the message.
 
     return Metadata(
         colour=site_colour,

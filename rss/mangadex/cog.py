@@ -7,7 +7,6 @@ from config import settings, RSS_OBSERVED_CHANNELS
 from ..shared import discord_api_service as DAS
 from ..shared import beautifulsoup_service as BSS
 
-import json
 import re
 from typing import List
 
