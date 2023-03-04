@@ -13,34 +13,62 @@ class Metadata:
                  description: str = None,
                  image: str = None,
                  site_name: str = None,
+                 soup: BeautifulSoup = None,
                  title: str = None,
                  url: str = None):
 
-        self._description = description
-        self._image = image
-        self._site_name = site_name
-        self._title = title
-        self._url = url
+        self._description: str = description
+        self._image: str = image
+        self._site_name: str = site_name
+        self._soup: BeautifulSoup = soup
+        self._title: str = title
+        self._url: str = url
 
     @property
     def description(self):
         return self._description
 
+    @description.setter
+    def description(self, value):
+        self._description = value
+
     @property
     def image(self):
         return self._image
+
+    @image.setter
+    def image(self, value):
+        self._image = value
 
     @property
     def site_name(self):
         return self._site_name
 
+    @site_name.setter
+    def site_name(self, value):
+        self._site_name = value
+
+    @property
+    def soup(self):
+        return self._soup
+
+    # No setter for BeautifulSoup
+
     @property
     def title(self):
         return self._title
 
+    @title.setter
+    def title(self, value):
+        self._title = value
+
     @property
     def url(self):
         return self._url
+
+    @url.setter
+    def url(self, value):
+        self._url = value
 
 
 def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
@@ -86,6 +114,7 @@ def fetch_page_metadata(url: str, spoof_user_agent: bool = True):
         description=og_description,
         image=og_image,
         site_name=og_site_name,
+        soup=soup,
         title=og_title,
         url=og_url
     )
