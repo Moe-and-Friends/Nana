@@ -23,14 +23,14 @@ class MangaDex(commands.Cog, name="MangaDex"):
     # Where the URL protocol and page number are optional.
     # Capture Group 1 is the chapter UUID
     # Capture Group 2 is the page number (optional)
-    CHAPTER_PATTERN = re.compile(r'(?:https://)?mangadex.org/chapter/([\w-]+)(?:/(\d+))?')
+    CHAPTER_PATTERN = re.compile(r'(?:https|http)://mangadex.org/chapter/([\w-]+)(?:/(\d+))?')
 
     # Pattern to match MangaDex manga URLs of the forms:
     # [https://]mangadex.org/title/<UUID>[/name]
     # Where the URL protocol and human-readable name are optional.
     # Capture Group 1 is the chapter UUID
     # Capture Group 2 is the name (optional)
-    MANGA_PATTERN = re.compile(r'(?:https://)?mangadex.org/title/([\w-]+)(?:/(\S+))?')
+    MANGA_PATTERN = re.compile(r'(?:https|http)://?mangadex.org/title/([\w-]+)(?:/(\S+))?')
 
     # The yellow-orangish colour used for Mangadex embed previews
     MANGADEX_COLOUR = 15102792

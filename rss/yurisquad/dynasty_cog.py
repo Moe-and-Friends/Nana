@@ -17,7 +17,7 @@ class Dynasty(commands.Cog, name="Dynasty"):
     Group 1: "series" or "chapters"
     Group 2: Series/Chapters reference section.
     """
-    DYNASTY_PATTERN = re.compile(r"(?:https://)?dynasty-scans\.com/(chapters|series)/([\w-]+)")
+    DYNASTY_PATTERN = re.compile(r"(?:https|http)://dynasty-scans\.com/(chapters|series)/([\w-]+)")
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
