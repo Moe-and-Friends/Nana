@@ -23,7 +23,7 @@ class Dynasty(commands.Cog, name="Dynasty"):
         self.bot = bot
 
     async def process_message(self, message: discord.Message):
-        webhooks = list()
+        metadata_all = list()
         # Find and extract all the URLs in the message
         dynasty_matches = self.DYNASTY_PATTERN.finditer(message.content)
         dynasty_urls = [match.group(0) for match in dynasty_matches]
@@ -31,8 +31,8 @@ class Dynasty(commands.Cog, name="Dynasty"):
         for url in dynasty_urls:
             metadata = BSS.fetch_page_metadata(url) 
             metadata.colour = 8514 # Dynasty Blue
-            webhooks.append(DAS.generate_webhook(message, metadata))
-        return webhooks
+            metadata_all.append(metadata)
+        return metadata_all
 
     @commands.Cog.listener("on_message")
     async def on_fluff_rss_message(self, message: discord.Message):
@@ -44,6 +44,6 @@ class Dynasty(commands.Cog, name="Dynasty"):
         if message.channel.id not in settings.get(RSS_OBSERVED_CHANNELS):
             return
         
-        webhooks = list()
-        webhooks.extend(await self.process_message(message))
+        metadata = await self.process_message(message)
+        webhooks = [DAS.generate_webhook(message, m) for m in metadata]
         DAS.send_webhooks(webhooks)
