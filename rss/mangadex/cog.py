@@ -10,8 +10,6 @@ from ..shared import beautifulsoup_service as BSS
 import re
 from typing import List
 
-# Note: This really doesn't necessarily have to be a Cog.
-
 
 class MangaDex(commands.Cog, name="MangaDex"):
 
@@ -35,44 +33,44 @@ class MangaDex(commands.Cog, name="MangaDex"):
     # The yellow-orangish colour used for Mangadex embed previews
     MANGADEX_COLOUR = 15102792
 
-    async def _generate_chapter_webhooks(self, urls: List[re.Match], discord_message: discord.Message):
-        webhooks = list()
+    async def _generate_chapter_webhooks(self, urls: List[re.Match]):
+        metadata = list()
         for url in urls:
             chapter_url = url.group(0)
             chapter_og_metadata = BSS.fetch_page_metadata(chapter_url)
             if chapter_og_metadata:
                 chapter_og_metadata.colour = self.MANGADEX_COLOUR
-                webhooks.append(DAS.generate_webhook(discord_message, chapter_og_metadata))
-        return webhooks
+                metadata.append(chapter_og_metadata)
+        return metadata
 
-    async def _generate_manga_webhooks(self, urls: List[str], discord_message: discord.Message):
-        webhooks = list()
+    async def _generate_manga_webhooks(self, urls: List[str]):
+        metadata = list()
         for url in urls:
             manga_og_metadata = BSS.fetch_page_metadata(url)
             if manga_og_metadata:
                 manga_og_metadata.colour = self.MANGADEX_COLOUR
-                webhooks.append(DAS.generate_webhook(discord_message, manga_og_metadata))
-        return webhooks
+                metadata.append(manga_og_metadata)
+        return metadata
 
-    async def _generate_manga_webhooks_from_re_matches(self, urls: List[re.Match], discord_message: discord.Message):
+    async def _generate_manga_webhooks_from_re_matches(self, urls: List[re.Match]):
         urls = [u.group(0) for u in urls]
-        return await self._generate_manga_webhooks(urls, discord_message)
+        return await self._generate_manga_webhooks(urls)
 
     async def process_message(self, message: discord.Message):
         """
         Call this method to get a list of webhooks (as json-encoded dicts) for all
         Mangadex-related URLs in a given Discord message.
         """
-        webhooks = list()
+        metadata = list()
 
         chapter_urls = self.CHAPTER_PATTERN.finditer(message.content)
-        webhooks.extend(await self._generate_chapter_webhooks(chapter_urls, message))
+        metadata.extend(await self._generate_chapter_webhooks(chapter_urls))
 
         # Double regex is technically inefficient, but Discord message QPS ceiling rate helps.
         manga_urls = self.MANGA_PATTERN.finditer(message.content)
-        webhooks.extend(await self._generate_manga_webhooks_from_re_matches(manga_urls, message))
+        metadata.extend(await self._generate_manga_webhooks_from_re_matches(manga_urls))
 
-        return webhooks
+        return metadata
 
     @commands.Cog.listener("on_message")
     async def on_fluff_rss_message(self, message: discord.Message):
@@ -85,6 +83,6 @@ class MangaDex(commands.Cog, name="MangaDex"):
             return
 
         # Create a list of all webhooks, and then send them.
-        webhooks = list()
-        webhooks.extend(await self.process_message(message))
+        metadata = await self.process_message(message)
+        webhooks = [DAS.generate_webhook(message, m) for m in metadata]
         DAS.send_webhooks(webhooks)
