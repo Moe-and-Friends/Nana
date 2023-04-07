@@ -41,7 +41,6 @@ class MangaDex(commands.Cog, name="MangaDex"):
             if chapter_og_metadata:
                 chapter_og_metadata.colour = self.MANGADEX_COLOUR
                 metadata.append(chapter_og_metadata)
-                # webhooks.append(DAS.generate_webhook(discord_message, chapter_og_metadata))
         return metadata
 
     async def _generate_manga_webhooks(self, urls: List[str]):
